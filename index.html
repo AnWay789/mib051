@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;600;800&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-event-date="21 NOV 2026">
@@ -23,7 +24,7 @@
         <span>MIB // INTERNAL NETWORK</span>
         <span class="dots">● ● ●</span>
       </div>
-      <pre class="terminal-text mono" id="typed"></pre>
+      <pre class="terminal-text mono" id="typed"></pre><span class="cursor" id="cursor"></span>
       <button class="enter hidden" id="enter" type="button">[ ОТКРЫТЬ ФАЙЛ ]</button>
     </div>
   </div>
@@ -59,10 +60,14 @@
       <div class="card">
         <div class="label">Координаты объекта</div>
         <p class="addr">Самарская обл., Ставропольский р-н, сельское поселение Выселки, СНТ Переработчик, 3-я ул., 96.</p>
-        <div class="map" aria-hidden="true">
-          <div class="cross"><span>AREA 051</span></div>
+        <div class="map" id="mapWrap" data-lat="53.6445232" data-lon="49.2968875" data-zoom="15">
+          <div id="map"></div>
+          <div class="map-reticle" aria-hidden="true"><span>AREA 051</span></div>
         </div>
-        <div class="hint">Схематичная визуализация зоны. Перед выездом сверь адрес с навигатором.</div>
+        <div class="hint">
+          Реальный спутниковый снимок района. Перед выездом сверь адрес с навигатором.
+          <br><a class="map-link mono" href="https://yandex.ru/maps/?ll=49.2968875%2C53.6445232&z=15&l=sat" target="_blank" rel="noopener">ОТКРЫТЬ В НАВИГАТОРЕ →</a>
+        </div>
       </div>
     </section>
 
@@ -154,6 +159,7 @@
 <iframe name="sinkFrame" id="sinkFrame" title="delivery" style="display:none"></iframe>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

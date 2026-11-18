@@ -122,9 +122,16 @@ function reply_(status, message) {
     status: status,
     message: String(message || '').slice(0, 300)
   });
+  // HtmlService отдаёт нашу страницу внутри вложенного iframe песочницы Google,
+  // поэтому сообщение шлём в window.top — это и есть страница лендинга.
+  var script = '(function(){var m=' + data + ';'
+    + 'function shout(w){try{if(w)w.postMessage(m,"*");}catch(e){}}'
+    + 'shout(window.top);'
+    + 'if(window.parent!==window.top)shout(window.parent);'
+    + '})();';
   var html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
     + '<p style="font-family:monospace;color:#333">MIB 051 // ' + status + '</p>'
-    + '<script>try{(window.parent||window).postMessage(' + data + ',"*");}catch(e){}</' + 'script>'
+    + '<script>' + script + '</' + 'script>'
     + '</body></html>';
   return HtmlService.createHtmlOutput(html)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);

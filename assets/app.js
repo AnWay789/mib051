@@ -10,7 +10,7 @@
 /* ==================== НАСТРОЙКИ ==================== */
 const CONFIG = {
   // URL веб-приложения Apps Script (Deploy → Web app → URL, заканчивается на /exec)
-  GAS_URL: 'ВСТАВЬ_СЮДА_URL_ВЕБ-ПРИЛОЖЕНИЯ',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbyLOmmKsxwdZG0BbAcH73p_Cc6R2w1mtjVE_P7V4nZmf5hYFc1QqLsty8kLcCsIsusu/exec',
   // Тот же ключ должен лежать в Code.gs
   SUBMIT_KEY: 'mib051-2026-11-21',
   MAX_PHOTO_BYTES: 15 * 1024 * 1024,
@@ -85,39 +85,74 @@ function setStatus(msg, kind) {
 
 /* ==================== ТЕРМИНАЛ-ИНТРО ==================== */
 const LINES = [
-  '> ESTABLISHING SECURE CONNECTION…',
-  '> IDENTITY CHECK: IN PROGRESS',
-  '> CLASSIFICATION: TOP SECRET',
-  '> YOU HAVE BEEN SELECTED.',
-  '> MISSION FILE 051 IS READY.'
+  { t: '> ESTABLISHING SECURE CONNECTION…', c: 'sys' },
+  { t: '> IDENTITY CHECK: IN PROGRESS', c: 'sys' },
+  { t: '> CLASSIFICATION: TOP SECRET', c: 'sys' },
+  { t: '', c: '' },
+  { t: 'Здравствуйте, кандидат.', c: 'letter' },
+  { t: '', c: '' },
+  { t: 'В ходе закрытого отбора ваша кандидатура была признана подходящей для участия в специальной операции организации MIB.', c: 'letter' },
+  { t: '', c: '' },
+  { t: 'Вы были отобраны не случайно.', c: 'letter' },
+  { t: '', c: '' },
+  { t: 'Вам предстоит стать частью команды, которой поручено выполнение миссии особой важности.', c: 'letter' },
+  { t: '', c: '' },
+  { t: '> AWAITING CONFIRMATION_', c: 'sys' }
 ];
 
+const TYPE_MS = 10;      // скорость набора одного символа
+const LINE_PAUSE = 150;  // пауза между строками
+
 const typed = $('typed');
+const cursor = $('cursor');
 const enterBtn = $('enter');
 let typeTimer = null;
 let typingDone = false;
 
-function typeNext(li, ci) {
+function appendLine(text, cls) {
+  if (!text) { typed.appendChild(document.createTextNode('\n')); return; }
+  const span = document.createElement('span');
+  span.className = 'line ' + cls;
+  span.textContent = text;
+  typed.appendChild(span);
+  typed.appendChild(document.createTextNode('\n'));
+}
+
+function typeNext(li, ci, el) {
   if (li >= LINES.length) {
     typingDone = true;
+    cursor.classList.add('hidden');
     enterBtn.classList.remove('hidden');
-    typed.textContent += '\n\n> AWAITING CONFIRMATION_';
     return;
   }
-  const line = LINES[li];
-  if (ci < line.length) {
-    typed.textContent += line.charAt(ci);
-    typeTimer = setTimeout(() => typeNext(li, ci + 1), 18);
+  const item = LINES[li];
+
+  if (!item.t) {
+    typed.appendChild(document.createTextNode('\n'));
+    typeTimer = setTimeout(() => typeNext(li + 1, 0, null), LINE_PAUSE);
+    return;
+  }
+  if (!el) {
+    el = document.createElement('span');
+    el.className = 'line ' + item.c;
+    typed.appendChild(el);
+    ci = 0;
+  }
+  if (ci < item.t.length) {
+    el.textContent += item.t.charAt(ci);
+    typeTimer = setTimeout(() => typeNext(li, ci + 1, el), TYPE_MS);
   } else {
-    typed.textContent += '\n';
-    typeTimer = setTimeout(() => typeNext(li + 1, 0), 180);
+    typed.appendChild(document.createTextNode('\n'));
+    typeTimer = setTimeout(() => typeNext(li + 1, 0, null), LINE_PAUSE);
   }
 }
 
 function finishTyping() {
   clearTimeout(typeTimer);
-  typed.textContent = LINES.join('\n') + '\n\n> AWAITING CONFIRMATION_';
+  typed.textContent = '';
+  LINES.forEach((item) => appendLine(item.t, item.c));
   typingDone = true;
+  cursor.classList.add('hidden');
   enterBtn.classList.remove('hidden');
 }
 
@@ -130,10 +165,48 @@ function reveal() {
     el.style.transitionDelay = Math.min(i * 70, 420) + 'ms';
     el.classList.add('in');
   });
+  initMap();
 }
 
 enterBtn.addEventListener('click', reveal);
 $('terminal').addEventListener('click', () => { if (!typingDone) finishTyping(); });
+
+/* ==================== КАРТА ==================== */
+let leafletMap = null;
+
+function initMap() {
+  const wrap = $('mapWrap');
+  if (!wrap || !window.L || leafletMap) return;
+
+  const lat = parseFloat(wrap.dataset.lat);
+  const lon = parseFloat(wrap.dataset.lon);
+  const zoom = parseInt(wrap.dataset.zoom, 10) || 15;
+  if (!isFinite(lat) || !isFinite(lon)) return;
+
+  leafletMap = L.map('map', {
+    center: [lat, lon],
+    zoom: zoom,
+    scrollWheelZoom: false, // чтобы карта не перехватывала прокрутку страницы
+    attributionControl: true,
+    zoomControl: true
+  });
+
+  L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 19, attribution: 'Спутник: Esri, Maxar, Earthstar Geographics' }
+  ).addTo(leafletMap);
+
+  L.circleMarker([lat, lon], {
+    radius: 7,
+    color: '#b7ff72',
+    weight: 2,
+    fillColor: '#b7ff72',
+    fillOpacity: 0.4
+  }).addTo(leafletMap);
+
+  // карта инициализируется уже видимой, но на всякий случай пересчитаем размер
+  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 120);
+}
 
 /* ==================== ШРИФТЫ ДЛЯ CANVAS ==================== */
 async function ensureFonts() {
@@ -472,6 +545,7 @@ function blobToBase64Url(blob) {
 
 /* ==================== ОТПРАВКА ==================== */
 let waiting = false;
+let frameArmed = false;
 let waitTimer = null;
 
 function endWaiting() {
@@ -508,11 +582,12 @@ function sendCard() {
       form.action = CONFIG.GAS_URL;
 
       waiting = true;
+      frameArmed = true;
       clearTimeout(waitTimer);
       waitTimer = setTimeout(() => {
         if (!waiting) return;
         endWaiting();
-        setStatus('Ответ не получен за 45 секунд. Нажми «Скачать PDF» — так карточка точно не потеряется.', 'err');
+        setStatus('Ответ не получен за 45 секунд. Если письмо не пришло — нажми «Скачать PDF» и отправь карточку вручную.', 'err');
       }, CONFIG.SUBMIT_TIMEOUT_MS);
 
       form.submit();
@@ -526,12 +601,24 @@ function sendCard() {
 window.addEventListener('message', (ev) => {
   const d = ev.data;
   if (!d || d.source !== 'mib051' || !waiting) return;
+  frameArmed = false;
   endWaiting();
   if (d.status === 'sent') {
     setStatus('ACCESS GRANTED // карточка отправлена директору операции. Можешь скачать себе копию.', 'ok');
   } else {
     setStatus('Сбой передачи: ' + (d.message || 'неизвестная ошибка') + ' — скачай PDF и отправь вручную.', 'err');
   }
+});
+
+// Запасной сигнал: страница Apps Script загрузилась в iframe — значит запрос дошёл.
+// Срабатывает, только если postMessage почему-то не пришёл.
+$('sinkFrame').addEventListener('load', () => {
+  if (!waiting || !frameArmed) return;
+  setTimeout(() => {
+    if (!waiting) return;
+    endWaiting();
+    setStatus('ACCESS GRANTED // карточка передана директору операции. Можешь скачать себе копию.', 'ok');
+  }, 900);
 });
 
 /* ==================== ВВОД ==================== */
