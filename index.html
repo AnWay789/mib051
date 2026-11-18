@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIB 051 // CLASSIFIED INVITATION</title>
+<meta name="theme-color" content="#070a08">
+<meta name="description" content="MIB 051 — приглашение и получение удостоверения агента.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;600;800&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-event-date="21 NOV 2026">
+
+<!-- ==================== ТЕРМИНАЛ ==================== -->
+<section class="terminal" id="terminal">
+  <div class="wrap">
+    <div class="terminal-box">
+      <div class="topline mono">
+        <span>MIB // INTERNAL NETWORK</span>
+        <span class="dots">● ● ●</span>
+      </div>
+      <pre class="terminal-text mono" id="typed"></pre>
+      <button class="enter hidden" id="enter" type="button">[ ОТКРЫТЬ ФАЙЛ ]</button>
+    </div>
+  </div>
+</section>
+
+<main id="main" class="hidden">
+  <div class="wrap">
+
+    <!-- ==================== ГЕРОЙ ==================== -->
+    <header class="hero reveal">
+      <div class="eyebrow mono">MIB 051 / CLASSIFIED INVITATION</div>
+      <h1>ТВОЁ&nbsp;ДЕЛО<br>НАЧИНАЕТСЯ<br>ЗДЕСЬ.</h1>
+      <p class="lead">Система распознала приглашённого сотрудника. Явка обязательна. Личность — под прикрытием.</p>
+      <div class="stamp mono">ACCESS LEVEL // 051</div>
+    </header>
+
+    <!-- ==================== 01 БРИФИНГ ==================== -->
+    <section class="section reveal">
+      <div class="eyebrow mono">01 / MISSION BRIEFING</div>
+      <h2>Операция назначена.</h2>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="label">Дата операции</div>
+          <div class="value">21 ноября 2026</div>
+        </div>
+        <div class="card">
+          <div class="label">Время сбора</div>
+          <div class="value">15:00</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Координаты объекта</div>
+        <p class="addr">Самарская обл., Ставропольский р-н, сельское поселение Выселки, СНТ Переработчик, 3-я ул., 96.</p>
+        <div class="map" aria-hidden="true">
+          <div class="cross"><span>AREA 051</span></div>
+        </div>
+        <div class="hint">Схематичная визуализация зоны. Перед выездом сверь адрес с навигатором.</div>
+      </div>
+    </section>
+
+    <!-- ==================== 02 ДРЕСС-КОД ==================== -->
+    <section class="section reveal">
+      <div class="eyebrow mono">02 / DRESS PROTOCOL</div>
+      <h2>Внешний вид — часть легенды.</h2>
+      <p><b>AGENT STYLE.</b> Чёрный костюм, белая рубашка, галстук, тёмные очки. Допускаются вариации в рамках дресс-кода. Главное — выглядеть так, будто ты знаешь больше остальных.</p>
+    </section>
+
+    <!-- ==================== 03 УДОСТОВЕРЕНИЕ ==================== -->
+    <section class="section reveal" id="identification">
+      <div class="eyebrow mono">03 / IDENTIFICATION</div>
+      <h2>Получи удостоверение агента.</h2>
+      <p>Заполни досье: имя, позывной и фотографию. Система соберёт карточку MIB и передаст её директору операции. Удостоверение можно скачать себе на память.</p>
+
+      <div class="id-layout">
+
+        <!-- --- форма --- -->
+        <form class="card panel" id="idForm" novalidate>
+          <div class="panel-head mono">
+            <span>FORM 051-A</span><span class="blink">REC</span>
+          </div>
+
+          <div class="field">
+            <label for="name">ИМЯ АГЕНТА</label>
+            <input id="name" name="name" type="text" autocomplete="name" maxlength="40" placeholder="Как тебя зовут" required>
+          </div>
+
+          <div class="field">
+            <label for="codename">ПОЗЫВНОЙ / 2–24 СИМВОЛА</label>
+            <input id="codename" name="codename" type="text" maxlength="24" placeholder="Например: NIGHT OWL" required>
+          </div>
+
+          <div class="field">
+            <label for="photo">ФОТО ДЛЯ УДОСТОВЕРЕНИЯ</label>
+            <label class="file" for="photo">
+              <span id="fileName" class="mono">ВЫБРАТЬ ФАЙЛ…</span>
+            </label>
+            <input id="photo" name="photo" type="file" accept="image/png,image/jpeg,image/webp,image/heic" hidden>
+            <div class="hint">JPG, PNG или WEBP. До 15 МБ. Без фото карточка тоже соберётся.</div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" type="submit" id="sendBtn">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+            <button class="btn ghost" type="button" id="downloadBtn">СКАЧАТЬ PDF</button>
+          </div>
+
+          <div class="status mono" id="status" role="status" aria-live="polite"></div>
+        </form>
+
+        <!-- --- предпросмотр карточки --- -->
+        <div class="preview">
+          <div class="preview-head mono">
+            <span>LIVE PREVIEW</span>
+            <span id="previewId">ID 051-0000</span>
+          </div>
+          <canvas id="card" width="1011" height="637" aria-label="Предпросмотр удостоверения агента"></canvas>
+          <div class="hint">Так карточка уйдёт в PDF — в натуральную величину, 85,6 × 54 мм.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 04 ФИНАЛ ==================== -->
+    <section class="section reveal">
+      <div class="eyebrow mono">04 / FINAL NOTICE</div>
+      <h2>Никаких лишних вопросов.</h2>
+      <p>Сохраняй спокойствие. Не обсуждай детали операции с посторонними. Если увидишь нечто необъяснимое — вероятно, так и задумано.</p>
+      <div class="stamp mono">ACCESS GRANTED // CASE 051</div>
+    </section>
+
+    <footer class="foot mono">
+      <span>MIB 051 — INTERNAL USE ONLY</span>
+      <span>THE TRUTH IS OUT THERE.</span>
+    </footer>
+  </div>
+</main>
+
+<!-- транспорт доставки: обычный POST в скрытый iframe, без CORS -->
+<form id="sink" method="POST" action="" target="sinkFrame" style="display:none">
+  <input type="hidden" name="key">
+  <input type="hidden" name="name">
+  <input type="hidden" name="codename">
+  <input type="hidden" name="agentId">
+  <input type="hidden" name="pdf">
+  <input type="text" name="website" tabindex="-1" autocomplete="off">
+</form>
+<iframe name="sinkFrame" id="sinkFrame" title="delivery" style="display:none"></iframe>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
