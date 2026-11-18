@@ -1,20 +1,31 @@
 /**
  * MIB 051 — приём карточек агентов с лендинга на GitHub Pages.
  *
- * Лендинг отправляет обычный POST (никакого CORS не требуется) в это
- * веб-приложение. Скрипт кладёт присланный PDF во вложение и отправляет
- * письмо на RECIPIENT_EMAIL. Итог сообщается странице через postMessage.
- *
- * ── Что нужно сделать один раз ─────────────────────────────────────────
- * 1. Заполнить RECIPIENT_EMAIL ниже.
- * 2. Развернуть как Web app: Execute as = Me, Who has access = Anyone.
- * 3. Скопировать URL /exec в CONFIG.GAS_URL файла assets/app.js.
- * 4. Запустить testSend() в редакторе и убедиться, что письмо дошло.
+ * ── ЧТО ДЕЛАТЬ ─────────────────────────────────────────────────────────
+ * 1. Выдели весь код в редакторе (Cmd+A) и вставь этот файл целиком.
+ * 2. Впиши почту получателя в RECIPIENT_EMAIL — это единственное,
+ *    что нужно менять.
+ * 3. Deploy → Manage deployments → карандаш ✏️ → Version: New version
+ *    → Deploy. БЕЗ ЭТОГО ШАГА ИЗМЕНЕНИЯ НЕ ПРИМЕНЯТСЯ.
+ * 4. Проверка: выбери функцию testSend и нажми Run — придёт письмо.
  * ───────────────────────────────────────────────────────────────────────
+ *
+ * ЧТО ГДЕ ЛЕЖИТ
+ *   doPost        принимает карточку с лендинга и шлёт письмо
+ *   testSend      пробное письмо для проверки
+ *   reply_        ответ странице лендинга через postMessage
+ *   buildHtml_    текст письма
  */
 
 var CONFIG = {
-  /** Кому уходит готовая карточка. ОБЯЗАТЕЛЬНО поменяй. */
+  /**
+   * Кому уходит готовая карточка. Впиши адрес сюда — это единственное,
+   * что нужно поменять в этом файле.
+   *
+   * Если однажды запустить рабочий адрес, он запомнится в свойствах скрипта.
+   * Поэтому повторная вставка этого файла заново не затрёт рабочую почту:
+   * когда здесь стоит заглушка, берётся запомненный адрес.
+   */
   RECIPIENT_EMAIL: 'ЗАМЕНИ_НА_ПОЧТУ_ДЕВУШКИ@example.com',
 
   /** Копия. Пусто — без копии. Можно перечислить через запятую. */
@@ -44,8 +55,9 @@ function doPost(e) {
     if (String(p.key || '') !== CONFIG.SUBMIT_KEY) {
       throw new Error('Неверный ключ доступа.');
     }
-    if (!isEmail_(CONFIG.RECIPIENT_EMAIL)) {
-      throw new Error('Получатель не настроен: заполни RECIPIENT_EMAIL в Code.gs.');
+    var recipient = recipient_();
+    if (!recipient) {
+      throw new Error('Получатель не настроен: впиши адрес в RECIPIENT_EMAIL в Code.gs.');
     }
 
     var name = clean_(p.name, 40);
@@ -70,7 +82,7 @@ function doPost(e) {
     if (isEmail_(CONFIG.CC_EMAIL)) options.cc = CONFIG.CC_EMAIL;
 
     GmailApp.sendEmail(
-      CONFIG.RECIPIENT_EMAIL,
+      recipient,
       CONFIG.SUBJECT,
       plainBody_(name, codename, agentId),
       options
@@ -95,10 +107,11 @@ function doGet() {
 
 /* ==================== ПРОВЕРКА ==================== */
 
-/** Запусти вручную из редактора: отправит тестовую карточку на RECIPIENT_EMAIL. */
+/** Запусти вручную из редактора: отправит тестовую карточку получателю. */
 function testSend() {
-  if (!isEmail_(CONFIG.RECIPIENT_EMAIL)) {
-    Logger.log('Сначала заполни RECIPIENT_EMAIL.');
+  var recipient = recipient_();
+  if (!recipient) {
+    Logger.log('Сначала впиши адрес в RECIPIENT_EMAIL в CONFIG выше.');
     return;
   }
   var pdf = '%PDF-1.4\n'
@@ -107,11 +120,28 @@ function testSend() {
     + '3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 243 153]>>endobj\n'
     + 'trailer<</Root 1 0 R>>\n%%EOF\n';
   var blob = Utilities.newBlob(pdf, 'application/pdf', 'MIB051-TEST.pdf');
-  GmailApp.sendEmail(CONFIG.RECIPIENT_EMAIL, CONFIG.SUBJECT + ' (ТЕСТ)', 'Тестовая отправка.', {
+  GmailApp.sendEmail(recipient, CONFIG.SUBJECT + ' (ТЕСТ)', 'Тестовая отправка.', {
     attachments: [blob],
     htmlBody: buildHtml_('ТЕСТОВЫЙ АГЕНТ', 'TEST RUN', '051-0000')
   });
-  Logger.log('Тестовое письмо отправлено на ' + CONFIG.RECIPIENT_EMAIL);
+  Logger.log('Тестовое письмо отправлено на ' + recipient);
+}
+
+/**
+ * Адрес получателя. Главное значение — то, что вписано в CONFIG выше.
+ * Если там заглушка, берётся адрес, запомненный в свойствах скрипта, —
+ * поэтому повторная вставка этого файла не затирает рабочий адрес.
+ */
+function recipient_() {
+  if (isEmail_(CONFIG.RECIPIENT_EMAIL)) {
+    var direct = String(CONFIG.RECIPIENT_EMAIL).trim();
+    try {
+      PropertiesService.getScriptProperties().setProperty('RECIPIENT_EMAIL', direct);
+    } catch (e) { /* запоминание не критично */ }
+    return direct;
+  }
+  var saved = PropertiesService.getScriptProperties().getProperty('RECIPIENT_EMAIL');
+  return isEmail_(saved) ? String(saved).trim() : '';
 }
 
 /* ==================== ВНУТРЕННЕЕ ==================== */
