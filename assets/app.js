@@ -475,7 +475,7 @@ function renderCard() {
   const AXX = RX + 300;
   label('ДОСТУП / ACCESS', AXX, 378);
   font(13, '500', MONO);
-  const accessText = 'ПО БАЗЕ A';
+  const accessText = 'A';
   const accessW = ctx.measureText(accessText).width + 26;
   ctx.strokeStyle = GREEN;
   ctx.lineWidth = 1;
