@@ -211,20 +211,11 @@ b{color:var(--white);font-weight:800}
   margin:18px 0 0;
 }
 #map{position:absolute;inset:0;z-index:0;background:#0b100d}
-.map-reticle{
-  position:absolute;
-  left:50%;top:50%;
-  width:clamp(96px,14vw,132px);height:clamp(96px,14vw,132px);
-  border:1px solid var(--green);
-  border-radius:50%;
-  transform:translate(-50%,-50%);
-  z-index:650;
-  pointer-events:none;
-  box-shadow:0 0 34px rgba(183,255,114,.28), inset 0 0 26px rgba(183,255,114,.16);
-}
-.map-reticle::before,.map-reticle::after{content:"";position:absolute;background:var(--green)}
-.map-reticle::before{width:1px;height:170%;left:50%;top:-35%}
-.map-reticle::after{height:1px;width:170%;top:50%;left:-35%}
+
+/* булавка: острие точно на координате */
+.mib-pin{background:none;border:0}
+.mib-pin svg{display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+
 /* окрас элементов Leaflet под тему */
 .leaflet-container{background:#0b100d;font-family:"DM Mono",monospace}
 .leaflet-control-attribution{

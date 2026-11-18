@@ -196,13 +196,18 @@ function initMap() {
     { maxZoom: 19, attribution: 'Спутник: Esri, Maxar, Earthstar Geographics' }
   ).addTo(leafletMap);
 
-  L.circleMarker([lat, lon], {
-    radius: 7,
-    color: '#b7ff72',
-    weight: 2,
-    fillColor: '#b7ff72',
-    fillOpacity: 0.4
-  }).addTo(leafletMap);
+  // булавка: острие иглы ставим точно на координату, поэтому iconAnchor внизу
+  const pin = L.divIcon({
+    className: 'mib-pin',
+    html: '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">'
+      + '<path d="M15 39C15 39 28 24.6 28 15A13 13 0 1 0 2 15C2 24.6 15 39 15 39Z"'
+      + ' fill="#b7ff72" stroke="#0a0e0b" stroke-width="2.5"/>'
+      + '<circle cx="15" cy="15" r="4.6" fill="#0a0e0b"/>'
+      + '</svg>',
+    iconSize: [30, 40],
+    iconAnchor: [15, 39]
+  });
+  L.marker([lat, lon], { icon: pin, keyboard: false }).addTo(leafletMap);
 
   // карта инициализируется уже видимой, но на всякий случай пересчитаем размер
   setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 120);
