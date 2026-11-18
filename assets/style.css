@@ -372,7 +372,7 @@ input[type=text]:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(183,2
   height:auto;
   border-radius:2px;
   box-shadow:0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(183,255,114,.08);
-  background:#f5f4f0;
+  background:#0a0e0b;
 }
 
 /* ==================== ПОДВАЛ ==================== */

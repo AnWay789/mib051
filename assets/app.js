@@ -25,12 +25,10 @@ const CONFIG = {
 const CARD_MM_W = 85.6;
 const CARD_MM_H = 54;
 
-/* палитра документа: строгий чёрно-белый бланк */
-const PAPER = '#f5f4f0';
-const INK = '#121212';
-const INK_2 = '#4a4a4a';
-const RULE = '#b9b8b2';
-const WHITE = '#ffffff';
+const GREEN = '#b7ff72';
+const GREEN_SOFT = 'rgba(183,255,114,.55)';
+const MUTED = '#8b978c';
+const WHITE = '#eef2ea';
 const MONO = '"DM Mono", ui-monospace, monospace';
 const SANS = 'Manrope, -apple-system, Arial, sans-serif';
 const NAME_RE = /^[\p{L}\p{N} .,'’\-]{2,40}$/u;
@@ -233,7 +231,7 @@ function font(size, weight, family) {
 
 function fitFont(text, maxW, size, weight, family, min) {
   let s = size;
-  const floor = min || 12;
+  const floor = min || 14;
   while (s > floor) {
     font(s, weight, family);
     if (ctx.measureText(text).width <= maxW) break;
@@ -257,151 +255,48 @@ function spacedWidth(text, spacing) {
   return w - spacing;
 }
 
-/* разрядка справа налево — для подписей, выровненных по правому краю */
-function spacedTextRight(text, xRight, y, spacing) {
-  spacedText(text, xRight - spacedWidth(text, spacing), y, spacing);
-}
-
-/* пунктирная отбивка между подписью поля и значением — как в типографских бланках */
-function dotLeaders(x1, x2, y) {
-  if (x2 - x1 < 20) return;
-  ctx.strokeStyle = 'rgba(18,18,18,.55)';
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  for (let x = x1; x < x2; x += 7) {
-    ctx.moveTo(x, y - 3);
-    ctx.lineTo(x + 1.7, y - 3);
-  }
-  ctx.stroke();
-}
-
-function hRule(x1, x2, y, color, width) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width || 1;
-  ctx.beginPath();
-  ctx.moveTo(x1, y + 0.5);
-  ctx.lineTo(x2, y + 0.5);
-  ctx.stroke();
-}
-
-/* строка бланка: подпись слева, значение справа, между ними пунктир */
-function fieldRow(x1, x2, y, labelText, valueText, valueSize) {
-  font(10, '400', MONO);
-  ctx.fillStyle = INK_2;
+function label(text, x, y) {
+  font(11, '400', MONO);
+  ctx.fillStyle = MUTED;
   ctx.textAlign = 'left';
-  const lw = spacedWidth(labelText, 1.6);
-  spacedText(labelText, x1, y, 1.6);
-
-  let vs = valueSize || 15;
-  const maxValW = (x2 - x1) * 0.62;
-  font(vs, '500', MONO);
-  while (vs > 10 && ctx.measureText(valueText).width > maxValW) {
-    vs -= 1;
-    font(vs, '500', MONO);
-  }
-  const vw = ctx.measureText(valueText).width;
-  ctx.fillStyle = INK;
-  ctx.textAlign = 'right';
-  ctx.fillText(valueText, x2, y);
-  ctx.textAlign = 'left';
-
-  dotLeaders(x1 + lw + 14, x2 - vw - 14, y);
-  hRule(x1, x2, y + 11, RULE, 1);
+  spacedText(text, x, y, 2.2);
 }
 
-/* классический «серый» пришелец: вытянутая голова и раскосые глаза */
-function drawAlienHead(cx, cy, w, h, color, eyeColor) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(w / 200, h / 260);
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(0, 130);
-  ctx.bezierCurveTo(-95, 100, -108, -30, -70, -92);
-  ctx.bezierCurveTo(-40, -140, 40, -140, 70, -92);
-  ctx.bezierCurveTo(108, -30, 95, 100, 0, 130);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = eyeColor;
-  ctx.beginPath();
-  ctx.ellipse(-34, -24, 31, 20, -0.42, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(34, -24, 31, 20, 0.42, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-/* канцелярская печать «ДОПУЩЕН» */
-function drawStamp(cx, cy, w, h, angle) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(angle);
-  ctx.globalAlpha = 0.40;
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.5;
-  ctx.strokeRect(-w / 2, -h / 2, w, h);
+function divider(y, alpha) {
+  ctx.strokeStyle = 'rgba(183,255,114,' + (alpha || 0.22) + ')';
   ctx.lineWidth = 1;
-  ctx.strokeRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10);
-  ctx.fillStyle = INK;
-  ctx.textAlign = 'left';
-  font(19, '500', MONO);
-  spacedText('ДОПУЩЕН', -spacedWidth('ДОПУЩЕН', 2.6) / 2, -3, 2.6);
-  font(9, '400', MONO);
-  spacedText('ACCESS GRANTED', -spacedWidth('ACCESS GRANTED', 1.7) / 2, 14, 1.7);
-  ctx.restore();
+  ctx.beginPath();
+  ctx.moveTo(40, y + 0.5);
+  ctx.lineTo(W - 40, y + 0.5);
+  ctx.stroke();
 }
 
-/* подпись от руки */
-function drawSignature(x, y, len) {
-  const pts = [[0.10, -16], [0.16, 9], [0.24, -23], [0.33, 7], [0.40, -13],
-               [0.50, 11], [0.58, -19], [0.66, 5], [0.74, -11], [0.84, 9], [1.00, -7]];
-  ctx.save();
-  ctx.globalAlpha = 0.75;
-  ctx.strokeStyle = INK;
+function cornerTicks(x, y, w, h, len, color) {
+  ctx.strokeStyle = color;
   ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  pts.forEach(([f, dy]) => ctx.lineTo(x + len * f, y + dy));
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x + len * 0.22, y + 6);
-  ctx.bezierCurveTo(x + len * 0.5, y + 28, x + len * 0.72, y - 22, x + len * 1.04, y + 1);
-  ctx.stroke();
-  ctx.restore();
+  const pts = [
+    [x, y, 1, 1],
+    [x + w, y, -1, 1],
+    [x, y + h, 1, -1],
+    [x + w, y + h, -1, -1]
+  ];
+  pts.forEach(([px, py, dx, dy]) => {
+    ctx.beginPath();
+    ctx.moveTo(px + dx * len, py);
+    ctx.lineTo(px, py);
+    ctx.lineTo(px, py + dy * len);
+    ctx.stroke();
+  });
 }
 
-/* фото переводим в оттенки серого через offscreen-канву */
-function grayDraw(img, sx, sy, sw, sh, dx, dy, dw, dh) {
-  try {
-    const off = document.createElement('canvas');
-    off.width = Math.max(1, Math.round(dw));
-    off.height = Math.max(1, Math.round(dh));
-    const octx = off.getContext('2d');
-    octx.drawImage(img, sx, sy, sw, sh, 0, 0, off.width, off.height);
-    const imgData = octx.getImageData(0, 0, off.width, off.height);
-    const p = imgData.data;
-    for (let i = 0; i < p.length; i += 4) {
-      const lum = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
-      const v = Math.max(0, Math.min(255, (lum - 128) * 1.16 + 133));
-      p[i] = p[i + 1] = p[i + 2] = v;
-    }
-    octx.putImageData(imgData, 0, 0);
-    ctx.drawImage(off, dx, dy, dw, dh);
-    return true;
-  } catch (e) {
-    return false; // если канва «испорчена» браузером — рисуем как есть
-  }
-}
-
+/* ==================== ФОТО ==================== */
 function drawPhotoBox(px, py, pw, ph) {
   ctx.save();
   ctx.beginPath();
   ctx.rect(px, py, pw, ph);
   ctx.clip();
 
-  ctx.fillStyle = '#e7e6e1';
+  ctx.fillStyle = '#101811';
   ctx.fillRect(px, py, pw, ph);
 
   if (state.photo) {
@@ -409,51 +304,62 @@ function drawPhotoBox(px, py, pw, ph) {
     const scale = Math.max(pw / img.width, ph / img.height);
     const dw = img.width * scale;
     const dh = img.height * scale;
-    const sx = (img.width - pw / scale) / 2;
-    const sy = (img.height - ph / scale) / 2;
-    const sw = pw / scale;
-    const sh = ph / scale;
-    if (!grayDraw(img, sx, sy, sw, sh, px, py, pw, ph)) {
-      ctx.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
-    }
+    ctx.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
+    // лёгкий зелёный оттенок «архивного снимка»
+    ctx.fillStyle = 'rgba(183,255,114,.08)';
+    ctx.fillRect(px, py, pw, ph);
   } else {
-    ctx.fillStyle = '#c6c5bf';
+    // силуэт-заглушка
+    ctx.fillStyle = 'rgba(183,255,114,.13)';
     ctx.beginPath();
-    ctx.ellipse(px + pw / 2, py + ph + 8, pw * 0.44, ph * 0.30, 0, 0, Math.PI * 2);
+    ctx.ellipse(px + pw / 2, py + ph + 6, pw * 0.44, ph * 0.30, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.arc(px + pw / 2, py + ph * 0.40, pw * 0.23, 0, Math.PI * 2);
     ctx.fill();
-    font(10, '400', MONO);
-    ctx.fillStyle = INK_2;
-    ctx.textAlign = 'left';
-    spacedText('НЕТ ФОТО', px + pw / 2 - spacedWidth('НЕТ ФОТО', 2) / 2, py + ph - 18, 2);
+    font(11, '400', MONO);
+    ctx.fillStyle = 'rgba(183,255,114,.45)';
+    ctx.textAlign = 'center';
+    spacedText('NO PHOTO', px + pw / 2 - spacedWidth('NO PHOTO', 2) / 2, py + ph - 16, 2);
   }
+
+  // сканлайны поверх снимка
+  ctx.fillStyle = 'rgba(0,0,0,.18)';
+  for (let y = py; y < py + ph; y += 3) ctx.fillRect(px, y, pw, 1);
+
   ctx.restore();
 
-  ctx.strokeStyle = INK;
+  ctx.strokeStyle = GREEN_SOFT;
   ctx.lineWidth = 2;
   ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+}
 
-  // угловые метки вклейки — как на типографских бланках
-  const m = 7, L = 11;
+function drawHologram(x, y, size) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.28);
+  const g = ctx.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, 'rgba(183,255,114,.30)');
+  g.addColorStop(.5, 'rgba(183,255,114,.10)');
+  g.addColorStop(1, 'rgba(183,255,114,.26)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = 'rgba(183,255,114,.6)';
   ctx.lineWidth = 1;
-  ctx.strokeStyle = INK;
-  [[px, py, -1, -1], [px + pw, py, 1, -1], [px, py + ph, -1, 1], [px + pw, py + ph, 1, 1]]
-    .forEach(([x, y, dx, dy]) => {
-      ctx.beginPath();
-      ctx.moveTo(x + dx * m, y + dy * (m + L));
-      ctx.lineTo(x + dx * m, y + dy * m);
-      ctx.lineTo(x + dx * (m + L), y + dy * m);
-      ctx.stroke();
-    });
+  ctx.strokeRect(.5, .5, size - 1, size - 1);
+  font(13, '500', MONO);
+  ctx.fillStyle = 'rgba(183,255,114,.85)';
+  ctx.textAlign = 'center';
+  ctx.fillText('051', size / 2, size / 2 + 5);
+  ctx.restore();
 }
 
 /* ==================== ШТРИХ-КОД ==================== */
 function drawBarcode(x, y, w, h) {
   const rnd = mulberry32(1337);
-  ctx.fillStyle = INK;
+  ctx.fillStyle = 'rgba(238,242,234,.82)';
   let cx = x;
+  // стартовый «стопор»
   ctx.fillRect(cx, y, 4, h); cx += 8;
   ctx.fillRect(cx, y, 2, h); cx += 6;
   while (cx < x + w - 16) {
@@ -462,27 +368,26 @@ function drawBarcode(x, y, w, h) {
     if (rnd() > .32) ctx.fillRect(cx, y, Math.min(bw, x + w - 16 - cx), h);
     cx += bw + gap;
   }
+  // финальный «стопор»
   ctx.fillRect(x + w - 8, y, 2, h);
   ctx.fillRect(x + w - 4, y, 4, h);
 }
 
-/* ==================== ОТРИСОВКА УДОСТОВЕРЕНИЯ ==================== */
+/* ==================== ОТРИСОВКА КАРТОЧКИ ==================== */
 function renderCard() {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, W, H);
-  ctx.textBaseline = 'alphabetic';
-  ctx.textAlign = 'left';
 
-  /* бумага бланка */
-  ctx.fillStyle = PAPER;
+  /* фон */
+  ctx.fillStyle = '#0a0e0b';
   ctx.fillRect(0, 0, W, H);
 
-  /* защитная сетка — как на номерных бланках */
+  /* диагональный «тиснёный» узор */
   ctx.save();
-  ctx.strokeStyle = 'rgba(18,18,18,.035)';
+  ctx.strokeStyle = 'rgba(183,255,114,.045)';
   ctx.lineWidth = 1;
-  for (let x = -H; x < W; x += 14) {
+  for (let x = -H; x < W; x += 20) {
     ctx.beginPath();
     ctx.moveTo(x, H);
     ctx.lineTo(x + H, 0);
@@ -490,125 +395,120 @@ function renderCard() {
   }
   ctx.restore();
 
-  /* водяной знак: пришелец */
-  drawAlienHead(W * 0.73, H * 0.50, 306, 398, 'rgba(18,18,18,.05)', 'rgba(18,18,18,.016)');
+  /* отсвет справа сверху */
+  const glow = ctx.createRadialGradient(W * 0.82, H * 0.05, 0, W * 0.82, H * 0.05, W * 0.85);
+  glow.addColorStop(0, 'rgba(183,255,114,.12)');
+  glow.addColorStop(1, 'rgba(183,255,114,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
 
-  /* двойная рамка */
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(16, 16, W - 32, H - 32);
+  /* рамка */
+  ctx.strokeStyle = 'rgba(183,255,114,.28)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(23.5, 23.5, W - 47, H - 47);
+  ctx.strokeRect(16.5, 16.5, W - 33, H - 33);
+  cornerTicks(24, 24, W - 48, H - 48, 18, GREEN_SOFT);
 
-  /* чёрная шапка */
-  ctx.fillStyle = INK;
-  ctx.fillRect(24, 24, W - 48, 58);
-
-  font(23, '800', SANS);
+  /* шапка */
+  font(26, '800', SANS);
   ctx.fillStyle = WHITE;
   ctx.textAlign = 'left';
-  spacedText('MEN IN BLACK', 40, 53, 2.6);
-
-  font(8.5, '400', MONO);
-  ctx.fillStyle = 'rgba(255,255,255,.7)';
-  spacedText('BUREAU OF EXTRATERRESTRIAL AFFAIRS', 40, 70, 1.4);
+  spacedText('MEN IN BLACK', 40, 62, 3);
 
   font(11, '400', MONO);
-  ctx.fillStyle = WHITE;
-  spacedTextRight('ФОРМА 051-А', W - 40, 51, 1.4);
-  font(8.5, '400', MONO);
-  ctx.fillStyle = 'rgba(255,255,255,.7)';
-  spacedTextRight('ЛИЧНОЕ ДЕЛО 051', W - 40, 70, 1.4);
+  ctx.fillStyle = MUTED;
+  spacedText('IDENTIFICATION CARD // CLASSIFIED', 40, 82, 2.2);
 
-  /* значок пришельца в шапке */
-  drawAlienHead(858, 53, 26, 34, WHITE, INK);
-
-  /* заголовок документа */
-  font(15, '800', SANS);
-  ctx.fillStyle = INK;
+  font(24, '500', MONO);
+  ctx.fillStyle = GREEN;
+  ctx.textAlign = 'right';
+  ctx.fillText('MIB 051', W - 40, 62);
   ctx.textAlign = 'left';
-  spacedText('СЛУЖЕБНОЕ УДОСТОВЕРЕНИЕ АГЕНТА', 40, 106, 1.2);
 
-  font(10, '400', MONO);
-  ctx.fillStyle = INK_2;
-  spacedTextRight('AGENT IDENTIFICATION', W - 40, 106, 1.8);
+  divider(96, 0.3);
 
-  hRule(24, W - 24, 119, INK, 1);
-
-  /* вклейка фотографии */
-  const PX = 40, PY = 134, PW = 268, PH = 320;
+  /* фото */
+  const PX = 40, PY = 112, PW = 292, PH = 366;
   drawPhotoBox(PX, PY, PW, PH);
+  drawHologram(PX + PW - 58, PY + 14, 44);
 
-  font(8.5, '400', MONO);
-  ctx.fillStyle = INK_2;
-  ctx.textAlign = 'left';
-  spacedText('ФОТО 4×5', PX, PY + PH + 20, 1.4);
-  spacedTextRight('№ ' + state.agentId + '-Ф', PX + PW, PY + PH + 20, 1.4);
+  /* правая колонка */
+  const RX = 372;
+  const RW = W - RX - 40;
 
-  /* графы личного дела */
-  const RX = 336, RX2 = W - 40;
-  const name = (state.name || 'НЕ УСТАНОВЛЕНО').toUpperCase();
+  const name = (state.name || 'НЕИЗВЕСТНЫЙ АГЕНТ').toUpperCase();
   const codename = (state.codename || '—').toUpperCase();
 
-  const ROWS = [
-    ['ФАМИЛИЯ, ИМЯ', name, 16],
-    ['ПОЗЫВНОЙ', codename, 16],
-    ['ЛИЧНЫЙ НОМЕР', state.agentId, 15],
-    ['ПОДРАЗДЕЛЕНИЕ', 'FIELD OPERATIONS', 15],
-    ['ВИД / SPECIES', 'НЕ УСТАНОВЛЕН', 15],
-    ['ДОПУСК', 'ДОПУЩЕН', 15],
-    ['ДЕЛО', '051/' + state.caseCode, 15],
-    ['СОБЫТИЕ / EVENT', CONFIG.EVENT_DATE, 14]
-  ];
-  ROWS.forEach((r, i) => fieldRow(RX, RX2, 148 + i * 36, r[0], r[1], r[2]));
+  label('NAME / ИМЯ', RX, 128);
+  const nameSize = fitFont(name, RW, 46, '800', SANS, 20);
+  font(nameSize, '800', SANS);
+  ctx.fillStyle = WHITE;
+  ctx.fillText(name, RX, 172);
 
-  /* предупреждение */
-  const WB_Y = 434, WB_H = 46;
-  ctx.strokeStyle = INK;
+  label('CODENAME / ПОЗЫВНОЙ', RX, 216);
+  const codeSize = fitFont(codename, RW, 34, '500', MONO, 16);
+  font(codeSize, '500', MONO);
+  ctx.fillStyle = GREEN;
+  ctx.fillText(codename, RX, 254);
+
+  label('AGENT ID', RX, 300);
+  font(26, '500', MONO);
+  ctx.fillStyle = GREEN;
+  ctx.textAlign = 'left';
+  ctx.fillText(state.agentId, RX, 334);
+
+  label('DIVISION', RX + 300, 300);
+  font(15, '400', MONO);
+  ctx.fillStyle = WHITE;
+  ctx.fillText('FIELD OPERATIONS', RX + 300, 334);
+
+  label('CLEARANCE', RX, 378);
+  // плашка CLEARANCE
+  font(13, '500', MONO);
+  const chipText = 'ACCESS GRANTED';
+  const chipW = ctx.measureText(chipText).width + 26;
+  ctx.fillStyle = GREEN;
+  ctx.fillRect(RX, 392, chipW, 28);
+  ctx.fillStyle = '#0b1209';
+  ctx.fillText(chipText, RX + 13, 411);
+
+  // допуск по базе — зашит в документ, гость его не выбирает
+  const AXX = RX + 300;
+  label('ДОСТУП / ACCESS', AXX, 378);
+  font(13, '500', MONO);
+  const accessText = 'ПО БАЗЕ A';
+  const accessW = ctx.measureText(accessText).width + 26;
+  ctx.strokeStyle = GREEN;
   ctx.lineWidth = 1;
-  ctx.strokeRect(RX + 0.5, WB_Y + 0.5, RX2 - RX - 1, WB_H);
-  ctx.fillStyle = INK;
-  ctx.fillRect(RX, WB_Y, 4, WB_H);
-  font(9, '400', MONO);
-  ctx.fillStyle = INK_2;
+  ctx.strokeRect(AXX + 0.5, 392.5, accessW, 27);
+  ctx.fillStyle = GREEN;
+  ctx.fillText(accessText, AXX + 13, 411);
+
+  label('CASE FILE', RX, 448);
+  font(17, '400', MONO);
+  ctx.fillStyle = MUTED;
   ctx.textAlign = 'left';
-  ctx.fillText('ВНИМАНИЕ. При обнаружении инопланетной активности немедленно', RX + 14, WB_Y + 18);
-  ctx.fillText('сообщить по внутреннему каналу 051. Разглашение — отзыв допуска.', RX + 14, WB_Y + 34);
+  ctx.fillText('051/' + state.caseCode, RX, 478);
 
-  /* печать «допущен» — на свободном поле бланка, справа от предупреждения */
-  drawStamp(838, 457, 240, 48, -0.13);
+  label('EVENT', AXX, 448);
+  font(15, '400', MONO);
+  ctx.fillStyle = MUTED;
+  ctx.fillText(CONFIG.EVENT_DATE, AXX, 478);
 
-  /* нижний блок */
-  hRule(24, W - 24, 496, INK, 1);
-  drawBarcode(40, 512, 330, 46);
+  /* нижняя полоса */
+  divider(496, 0.22);
+  drawBarcode(40, 514, W - 80, 48);
 
-  font(9, '400', MONO);
-  ctx.fillStyle = INK_2;
-  spacedText('MIB-' + state.agentId + '/' + state.caseCode, 40, 578, 1.4);
-  spacedText('ДЕЙСТВИТЕЛЕН ДО ' + CONFIG.EVENT_DATE, 40, 596, 1.2);
-
-  /* место печати */
-  ctx.save();
-  ctx.globalAlpha = 0.45;
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.arc(452, 546, 27, 0, Math.PI * 2);
-  ctx.stroke();
   font(10, '400', MONO);
-  ctx.fillStyle = INK;
+  ctx.fillStyle = MUTED;
   ctx.textAlign = 'left';
-  spacedText('М.П.', 452 - spacedWidth('М.П.', 1.4) / 2, 550, 1.4);
-  ctx.restore();
+  spacedText('AUTHORIZED PERSONNEL ONLY', 40, 592, 1.8);
 
-  /* подпись */
-  drawSignature(592, 566, 296);
-  hRule(560, W - 40, 582, INK, 1);
-  font(8.5, '400', MONO);
-  ctx.fillStyle = INK_2;
+  ctx.textAlign = 'right';
+  font(11, '500', MONO);
+  ctx.fillStyle = GREEN_SOFT;
+  ctx.textAlign = 'right';
+  ctx.fillText('MIB-' + state.agentId + '/' + state.caseCode, W - 40, 592);
   ctx.textAlign = 'left';
-  spacedText('ПОДПИСЬ УПОЛНОМОЧЕННОГО ЛИЦА', 560, 598, 1.4);
-  spacedTextRight('AUTHORIZING SIGNATURE', W - 40, 598, 1.4);
 
   ctx.restore();
 }
@@ -629,9 +529,8 @@ function buildPdf() {
     author: 'MIB 051',
     creator: 'MIB 051 Credential Generator'
   });
-  // PNG, а не JPEG: у бланка тонкие линейки и пунктиры, JPEG их размывает
-  const data = canvas.toDataURL('image/png');
-  pdf.addImage(data, 'PNG', 0, 0, CARD_MM_W, CARD_MM_H);
+  const data = canvas.toDataURL('image/jpeg', 0.93);
+  pdf.addImage(data, 'JPEG', 0, 0, CARD_MM_W, CARD_MM_H, undefined, 'FAST');
   return pdf;
 }
 
