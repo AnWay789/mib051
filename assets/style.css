@@ -225,14 +225,6 @@ b{color:var(--white);font-weight:800}
 .map-reticle::before,.map-reticle::after{content:"";position:absolute;background:var(--green)}
 .map-reticle::before{width:1px;height:170%;left:50%;top:-35%}
 .map-reticle::after{height:1px;width:170%;top:50%;left:-35%}
-.map-reticle span{
-  position:absolute;left:50%;top:50%;
-  transform:translate(-50%,-50%);
-  background:var(--green);color:#081008;
-  padding:5px 9px;
-  font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.12em;
-  white-space:nowrap;
-}
 /* окрас элементов Leaflet под тему */
 .leaflet-container{background:#0b100d;font-family:"DM Mono",monospace}
 .leaflet-control-attribution{
