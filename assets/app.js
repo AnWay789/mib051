@@ -25,7 +25,7 @@ const CONFIG = {
 const CARD_MM_W = 85.6;
 const CARD_MM_H = 54;
 
-/* палитра документа: строги�� ч��рно-белый бланк */
+/* палитра документа: строгий чёрно-белый бланк */
 const PAPER = '#f5f4f0';
 const INK = '#121212';
 const INK_2 = '#4a4a4a';
